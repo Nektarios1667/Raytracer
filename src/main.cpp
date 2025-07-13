@@ -21,7 +21,7 @@ using namespace std;
 using namespace std::chrono;
 
 constexpr unsigned MAX_DEPTH = 3;
-constexpr unsigned SAMPLES_PER_PIXEL = 4; // Anti-aliasing
+constexpr unsigned PIXEL_SAMPLES = 4; // Anti-aliasing
 
 enum class ImageQuality {
     Low = 640,
@@ -100,14 +100,14 @@ Color traceRay(const Ray& ray, const vector<unique_ptr<Hittable>>& scene, const 
 
     // Mix reflection with local color (reflectivity controls contribution)
     float reflectivity = hitObject->reflectivity;
-    pixelColor = pixelColor * (1 - reflectivity) + reflectedColor * reflectivity;
+    pixelColor = pixelColor * (1 - reflectivity) + (reflectedColor * hitObject->color) * reflectivity;
 
     return pixelColor;
 }
 Color tracePixel(int x, int y, vector<unique_ptr<Hittable>>& scene, Camera camera, vector<Light> lights, Light ambientLight, int width, int height) {
     Color accumulatedColor(0, 0, 0);
 
-    for (int s = 0; s < SAMPLES_PER_PIXEL; s++) {
+    for (int s = 0; s < PIXEL_SAMPLES; s++) {
         // Random offsets from -1 to 1
         float offsetX = Utilities::randomFloat();  
         float offsetY = Utilities::randomFloat();
@@ -125,7 +125,7 @@ Color tracePixel(int x, int y, vector<unique_ptr<Hittable>>& scene, Camera camer
     }
 
     // Average the samples
-    return accumulatedColor / SAMPLES_PER_PIXEL;
+    return accumulatedColor / PIXEL_SAMPLES;
 }
 
 
@@ -133,14 +133,14 @@ int main() {
     auto startTime = high_resolution_clock::now();
 
     // Settings
-    ImageQuality quality = ImageQuality::High;
+    ImageQuality quality = ImageQuality::Low;
     int fov = 70;
     int imageWidth = (int)quality;
     float aspectRatio = 16.0f / 9.0f;
     int imageHeight = static_cast<int>(imageWidth / aspectRatio);
 
     // Print
-    cout << "Settings:\n" << "  FOV: " << fov << "\n  Width: " << imageWidth << "\n  Height: " << imageHeight << "\n  Anti-aliasing: " << SAMPLES_PER_PIXEL << "\n  Depth: " << MAX_DEPTH << endl;
+    cout << "Settings:\n" << "  FOV: " << fov << "\n  Width: " << imageWidth << "\n  Height: " << imageHeight << "\n  Anti-aliasing: " << PIXEL_SAMPLES << "\n  Depth: " << MAX_DEPTH << endl;
 
     // Lighting
     Light ambientLight = { Vector3(), Color(1, 1, 1), .1f };
@@ -157,8 +157,8 @@ int main() {
 
     // Objects
     vector<unique_ptr<Hittable>> scene;
-    scene.push_back(make_unique<Sphere>(Vector3(0, 0, -1), 2, Color(0, 1, 0), .5f, 0.1f));
-    scene.push_back(make_unique<Sphere>(Vector3(3, 0, 0), 1, Color(0, 0, 1), .3f, 0.0f));
+    scene.push_back(make_unique<Sphere>(Vector3(0, 0, -1), 2, Color(1, 1, 1), .5f, 0.1f));
+    scene.push_back(make_unique<Sphere>(Vector3(3, 0, 0), 1, Color(1, 1, 1), 1.0f, 0.0f));
     scene.push_back(make_unique<Sphere>(Vector3(0, -102, 0), 100, Color(1, 1, 1), 0, 0.0f));
 
     // Output
